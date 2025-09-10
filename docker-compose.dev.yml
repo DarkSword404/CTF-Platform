@@ -1,0 +1,172 @@
+version: '3.8'
+
+services:
+  # PostgreSQL数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: ctf-postgres-dev
+    environment:
+      POSTGRES_DB: ctf_platform_dev
+      POSTGRES_USER: ctf_user
+      POSTGRES_PASSWORD: ctf_password
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - ctf-dev-network
+
+  # MongoDB数据库
+  mongodb:
+    image: mongo:7-jammy
+    container_name: ctf-mongodb-dev
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ctf_admin
+      MONGO_INITDB_ROOT_PASSWORD: ctf_mongo_password
+      MONGO_INITDB_DATABASE: ctf_challenges_dev
+    volumes:
+      - mongodb_dev_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    ports:
+      - "27017:27017"
+    networks:
+      - ctf-dev-network
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: ctf-redis-dev
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - ctf-dev-network
+
+  # 后端服务（开发模式）
+  backend-dev:
+    build:
+      context: ./backend
+      dockerfile: ../Dockerfile.backend
+    container_name: ctf-backend-dev
+    environment:
+      FLASK_ENV: development
+      FLASK_DEBUG: 1
+      DATABASE_URL: postgresql://ctf_user:ctf_password@postgres:5432/ctf_platform_dev
+      MONGODB_URI: mongodb://ctf_admin:ctf_mongo_password@mongodb:27017/ctf_challenges_dev?authSource=admin
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: dev-secret-key
+      JWT_SECRET_KEY: dev-jwt-secret-key
+      
+      # AI模型配置
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      ERNIE_BOT_AK: ${ERNIE_BOT_AK:-}
+      ERNIE_BOT_SK: ${ERNIE_BOT_SK:-}
+      TONGYI_QIANWEN_API_KEY: ${TONGYI_QIANWEN_API_KEY:-}
+      ZHIPU_AI_API_KEY: ${ZHIPU_AI_API_KEY:-}
+    volumes:
+      - ./backend:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "5000:5000"
+    networks:
+      - ctf-dev-network
+    depends_on:
+      - postgres
+      - mongodb
+      - redis
+    command: ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000", "--reload"]
+
+  # 前端服务（开发模式）
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: ../Dockerfile.frontend
+      target: builder
+    container_name: ctf-frontend-dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    networks:
+      - ctf-dev-network
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - REACT_APP_API_BASE_URL=http://localhost:5000
+    command: ["pnpm", "run", "dev", "--host", "0.0.0.0"]
+
+  # Ollama服务（开发环境）
+  ollama-dev:
+    image: ollama/ollama:latest
+    container_name: ctf-ollama-dev
+    volumes:
+      - ollama_dev_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - ctf-dev-network
+    environment:
+      - OLLAMA_ORIGINS=*
+
+  # 数据库管理工具
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: ctf-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@ctf-platform.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "8080:80"
+    networks:
+      - ctf-dev-network
+    depends_on:
+      - postgres
+
+  # MongoDB管理工具
+  mongo-express:
+    image: mongo-express:latest
+    container_name: ctf-mongo-express
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ctf_admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ctf_mongo_password
+      ME_CONFIG_MONGODB_URL: mongodb://ctf_admin:ctf_mongo_password@mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin123
+    ports:
+      - "8081:8081"
+    networks:
+      - ctf-dev-network
+    depends_on:
+      - mongodb
+
+  # Redis管理工具
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: ctf-redis-commander
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8082:8081"
+    networks:
+      - ctf-dev-network
+    depends_on:
+      - redis
+
+volumes:
+  postgres_dev_data:
+  mongodb_dev_data:
+  redis_dev_data:
+  ollama_dev_data:
+  pgadmin_data:
+
+networks:
+  ctf-dev-network:
+    driver: bridge
+

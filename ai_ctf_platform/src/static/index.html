@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI CTF Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px 10px 0 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            background: white;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .tab:hover {
+            background: #e9ecef;
+        }
+        
+        .content {
+            background: white;
+            border-radius: 0 0 10px 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            min-height: 500px;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.2s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card p {
+            opacity: 0.9;
+        }
+        
+        .challenge-list {
+            display: grid;
+            gap: 15px;
+        }
+        
+        .challenge-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border-left: 4px solid #28a745;
+        }
+        
+        .challenge-item.misc {
+            border-left-color: #ffc107;
+        }
+        
+        .challenge-item.crypto {
+            border-left-color: #dc3545;
+        }
+        
+        .challenge-item.web {
+            border-left-color: #17a2b8;
+        }
+        
+        .challenge-meta {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .badge-easy {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge-hard {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .badge-ai {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 AI CTF Platform</h1>
+            <p>智能化CTF题目生成与管理平台</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('generate')">AI生成题目</button>
+            <button class="tab" onclick="showTab('challenges')">题目管理</button>
+            <button class="tab" onclick="showTab('models')">AI模型配置</button>
+            <button class="tab" onclick="showTab('stats')">统计信息</button>
+        </div>
+        
+        <div class="content">
+            <!-- AI生成题目 -->
+            <div id="generate" class="tab-content active">
+                <h2>AI生成CTF题目</h2>
+                <form id="generateForm">
+                    <div class="form-group">
+                        <label for="category">题目类型</label>
+                        <select id="category" name="category" required>
+                            <option value="">请选择题目类型</option>
+                            <option value="misc">Misc</option>
+                            <option value="crypto">Crypto</option>
+                            <option value="web">Web</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="difficulty">难度</label>
+                        <select id="difficulty" name="difficulty" required>
+                            <option value="">请选择难度</option>
+                            <option value="easy">简单</option>
+                            <option value="medium">中等</option>
+                            <option value="hard">困难</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ai_model_id">AI模型</label>
+                        <select id="ai_model_id" name="ai_model_id">
+                            <option value="">使用默认模型</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="theme">主题（可选）</label>
+                        <input type="text" id="theme" name="theme" placeholder="例如：网络安全、密码学、隐写术等">
+                    </div>
+                    
+                    <div id="miscOptions" class="form-group" style="display: none;">
+                        <label for="hide_method">隐藏方式</label>
+                        <select id="hide_method" name="hide_method">
+                            <option value="">自动选择</option>
+                            <option value="LSB隐写">LSB隐写</option>
+                            <option value="文件头隐藏">文件头隐藏</option>
+                            <option value="压缩包密码">压缩包密码</option>
+                        </select>
+                    </div>
+                    
+                    <div id="cryptoOptions" class="form-group" style="display: none;">
+                        <label for="algorithm">加密算法</label>
+                        <select id="algorithm" name="algorithm">
+                            <option value="">自动选择</option>
+                            <option value="Caesar">Caesar密码</option>
+                            <option value="RSA">RSA</option>
+                            <option value="AES">AES</option>
+                        </select>
+                    </div>
+                    
+                    <div id="webOptions" style="display: none;">
+                        <div class="form-group">
+                            <label for="vulnerability">漏洞类型</label>
+                            <select id="vulnerability" name="vulnerability">
+                                <option value="">自动选择</option>
+                                <option value="SQL注入">SQL注入</option>
+                                <option value="XSS">XSS</option>
+                                <option value="文件上传">文件上传</option>
+                                <option value="反序列化">反序列化</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="framework">框架</label>
+                            <select id="framework" name="framework">
+                                <option value="Flask">Flask</option>
+                                <option value="Django">Django</option>
+                                <option value="Express">Express</option>
+                                <option value="PHP">PHP</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn">🚀 生成题目</button>
+                </form>
+                
+                <div id="generateResult" style="display: none;"></div>
+            </div>
+            
+            <!-- 题目管理 -->
+            <div id="challenges" class="tab-content">
+                <h2>题目管理</h2>
+                <div id="challengesList"></div>
+            </div>
+            
+            <!-- AI模型配置 -->
+            <div id="models" class="tab-content">
+                <h2>AI模型配置</h2>
+                <button class="btn" onclick="showAddModelForm()">➕ 添加AI模型</button>
+                
+                <div id="addModelForm" style="display: none; margin-top: 20px;">
+                    <h3>添加AI模型</h3>
+                    <form id="modelForm">
+                        <div class="form-group">
+                            <label for="model_name">模型名称</label>
+                            <input type="text" id="model_name" name="name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="provider">提供商</label>
+                            <select id="provider" name="provider" required>
+                                <option value="openai">OpenAI</option>
+                                <option value="deepseek">DeepSeek</option>
+                                <option value="gemini">Google Gemini</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="api_key">API Key</label>
+                            <input type="password" id="api_key" name="api_key" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="api_base">API Base URL（可选）</label>
+                            <input type="url" id="api_base" name="api_base">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="model_name_field">模型名称</label>
+                            <input type="text" id="model_name_field" name="model_name" required placeholder="例如：gpt-4, deepseek-chat">
+                        </div>
+                        
+                        <button type="submit" class="btn">保存模型</button>
+                        <button type="button" class="btn" onclick="hideAddModelForm()" style="background: #6c757d;">取消</button>
+                    </form>
+                </div>
+                
+                <div id="modelsList"></div>
+            </div>
+            
+            <!-- 统计信息 -->
+            <div id="stats" class="tab-content">
+                <h2>统计信息</h2>
+                <div id="statsContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentTab = 'generate';
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAIModels();
+            loadChallenges();
+            loadStats();
+            
+            // 绑定表单事件
+            document.getElementById('generateForm').addEventListener('submit', generateChallenge);
+            document.getElementById('modelForm').addEventListener('submit', saveModel);
+            document.getElementById('category').addEventListener('change', toggleCategoryOptions);
+        });
+        
+        // 切换标签页
+        function showTab(tabName) {
+            // 隐藏所有标签内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 移除所有标签的激活状态
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 显示选中的标签内容
+            document.getElementById(tabName).classList.add('active');
+            
+            // 激活选中的标签
+            event.target.classList.add('active');
+            
+            currentTab = tabName;
+            
+            // 根据标签页加载相应数据
+            if (tabName === 'challenges') {
+                loadChallenges();
+            } else if (tabName === 'models') {
+                loadModels();
+            } else if (tabName === 'stats') {
+                loadStats();
+            }
+        }
+        
+        // 切换类型选项
+        function toggleCategoryOptions() {
+            const category = document.getElementById('category').value;
+            
+            // 隐藏所有选项
+            document.getElementById('miscOptions').style.display = 'none';
+            document.getElementById('cryptoOptions').style.display = 'none';
+            document.getElementById('webOptions').style.display = 'none';
+            
+            // 显示对应选项
+            if (category === 'misc') {
+                document.getElementById('miscOptions').style.display = 'block';
+            } else if (category === 'crypto') {
+                document.getElementById('cryptoOptions').style.display = 'block';
+            } else if (category === 'web') {
+                document.getElementById('webOptions').style.display = 'block';
+            }
+        }
+        
+        // 生成题目
+        async function generateChallenge(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            // 移除空值
+            Object.keys(data).forEach(key => {
+                if (!data[key]) {
+                    delete data[key];
+                }
+            });
+            
+            const resultDiv = document.getElementById('generateResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>AI正在生成题目，请稍候...</p>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch('/api/generate-challenge', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <h3>✅ 题目生成成功！</h3>
+                            <div class="card">
+                                <h3>${result.data.challenge.name}</h3>
+                                <p><strong>类型：</strong>${result.data.challenge.category}</p>
+                                <p><strong>难度：</strong>${result.data.challenge.difficulty}</p>
+                                <p><strong>分数：</strong>${result.data.challenge.points}</p>
+                                <p><strong>描述：</strong>${result.data.challenge.description}</p>
+                                <p><strong>Flag：</strong><code>${result.data.challenge.flag}</code></p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 重新加载题目列表
+                    if (currentTab === 'challenges') {
+                        loadChallenges();
+                    }
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-error">
+                            <h3>❌ 生成失败</h3>
+                            <p>${result.error}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="alert alert-error">
+                        <h3>❌ 网络错误</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // 加载AI模型列表
+        async function loadAIModels() {
+            try {
+                const response = await fetch('/api/ai-models');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const select = document.getElementById('ai_model_id');
+                    select.innerHTML = '<option value="">使用默认模型</option>';
+                    
+                    result.data.forEach(model => {
+                        const option = document.createElement('option');
+                        option.value = model.id;
+                        option.textContent = `${model.name} (${model.provider})`;
+                        if (model.is_default) {
+                            option.textContent += ' [默认]';
+                        }
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('加载AI模型失败:', error);
+            }
+        }
+        
+        // 加载题目列表
+        async function loadChallenges() {
+            try {
+                const response = await fetch('/api/challenges');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const container = document.getElementById('challengesList');
+                    
+                    if (result.data.challenges.length === 0) {
+                        container.innerHTML = '<p>暂无题目</p>';
+                        return;
+                    }
+                    
+                    container.innerHTML = result.data.challenges.map(challenge => `
+                        <div class="challenge-item ${challenge.category}">
+                            <h3>${challenge.name}</h3>
+                            <p>${challenge.description}</p>
+                            <div class="challenge-meta">
+                                <span class="badge badge-${challenge.difficulty}">${challenge.difficulty}</span>
+                                <span class="badge">${challenge.category}</span>
+                                <span class="badge">${challenge.points}分</span>
+                                ${challenge.is_ai_generated ? '<span class="badge badge-ai">AI生成</span>' : ''}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('加载题目失败:', error);
+            }
+        }
+        
+        // 显示添加模型表单
+        function showAddModelForm() {
+            document.getElementById('addModelForm').style.display = 'block';
+        }
+        
+        // 隐藏添加模型表单
+        function hideAddModelForm() {
+            document.getElementById('addModelForm').style.display = 'none';
+            document.getElementById('modelForm').reset();
+        }
+        
+        // 保存模型
+        async function saveModel(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch('/api/ai-models', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    hideAddModelForm();
+                    loadModels();
+                    loadAIModels(); // 更新生成页面的模型选择
+                    alert('模型保存成功！');
+                } else {
+                    alert('保存失败：' + result.error);
+                }
+            } catch (error) {
+                alert('网络错误：' + error.message);
+            }
+        }
+        
+        // 加载模型列表
+        async function loadModels() {
+            try {
+                const response = await fetch('/api/ai-models');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const container = document.getElementById('modelsList');
+                    
+                    if (result.data.length === 0) {
+                        container.innerHTML = '<p>暂无AI模型配置</p>';
+                        return;
+                    }
+                    
+                    container.innerHTML = result.data.map(model => `
+                        <div class="card">
+                            <h3>${model.name} ${model.is_default ? '(默认)' : ''}</h3>
+                            <p><strong>提供商：</strong>${model.provider}</p>
+                            <p><strong>模型：</strong>${model.model_name}</p>
+                            <p><strong>状态：</strong>${model.is_active ? '激活' : '禁用'}</p>
+                            <p><strong>支持类型：</strong>
+                                ${model.supports_misc ? 'Misc ' : ''}
+                                ${model.supports_crypto ? 'Crypto ' : ''}
+                                ${model.supports_web ? 'Web' : ''}
+                            </p>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('加载模型失败:', error);
+            }
+        }
+        
+        // 加载统计信息
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const container = document.getElementById('statsContent');
+                    const stats = result.data;
+                    
+                    container.innerHTML = `
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <h3>${stats.total_challenges}</h3>
+                                <p>总题目数</p>
+                            </div>
+                            <div class="stat-card">
+                                <h3>${stats.ai_generated_challenges}</h3>
+                                <p>AI生成题目</p>
+                            </div>
+                            <div class="stat-card">
+                                <h3>${stats.manual_challenges}</h3>
+                                <p>手动创建题目</p>
+                            </div>
+                            <div class="stat-card">
+                                <h3>${stats.generation_stats.success_rate}%</h3>
+                                <p>生成成功率</p>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3>按类型统计</h3>
+                            <p>Misc: ${stats.category_stats.misc || 0}</p>
+                            <p>Crypto: ${stats.category_stats.crypto || 0}</p>
+                            <p>Web: ${stats.category_stats.web || 0}</p>
+                        </div>
+                        
+                        <div class="card">
+                            <h3>按难度统计</h3>
+                            <p>简单: ${stats.difficulty_stats.easy || 0}</p>
+                            <p>中等: ${stats.difficulty_stats.medium || 0}</p>
+                            <p>困难: ${stats.difficulty_stats.hard || 0}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('加载统计信息失败:', error);
+            }
+        }
+    </script>
+</body>
+</html>

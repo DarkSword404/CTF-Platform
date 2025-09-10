@@ -152,7 +152,7 @@ const AIModelManager = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Brain className="h-5 w-5" />
-                生成的题目 - {result.data.model_used}
+                生成的题目 - {result.data.provider_used}
               </CardTitle>
               <CardDescription>
                 生成时间: {result.data.generation_time_ms}ms
@@ -161,17 +161,17 @@ const AIModelManager = () => {
             <CardContent className="space-y-4">
               <div>
                 <Label className="font-semibold">标题</Label>
-                <p className="mt-1">{result.data.challenge.title}</p>
+                <p className="mt-1">{result.data.challenge?.title}</p>
               </div>
               <div>
                 <Label className="font-semibold">描述</Label>
-                <p className="mt-1 whitespace-pre-wrap">{result.data.challenge.description}</p>
+                <p className="mt-1 whitespace-pre-wrap">{result.data.challenge?.description}</p>
               </div>
               <div>
                 <Label className="font-semibold">Flag</Label>
-                <code className="mt-1 block p-2 bg-gray-100 rounded">{result.data.challenge.flag}</code>
+                <code className="mt-1 block p-2 bg-gray-100 rounded">{result.data.challenge?.flag}</code>
               </div>
-              {result.data.challenge.hints && result.data.challenge.hints.length > 0 && (
+              {result.data.challenge?.hints && result.data.challenge.hints.length > 0 && (
                 <div>
                   <Label className="font-semibold">提示</Label>
                   <ul className="mt-1 list-disc list-inside">
@@ -191,7 +191,7 @@ const AIModelManager = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Zap className="h-5 w-5" />
-                生成的Flag - {result.data.model_used}
+                生成的Flag - {result.data.provider_used}
               </CardTitle>
               <CardDescription>
                 生成时间: {result.data.generation_time_ms}ms
@@ -211,7 +211,7 @@ const AIModelManager = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Brain className="h-5 w-5" />
-                生成的文本 - {result.data.model_used}
+                生成的文本 - {result.data.provider_used}
               </CardTitle>
               <CardDescription>
                 生成时间: {result.data.generation_time_ms}ms | 词数: {result.data.token_count}
@@ -221,58 +221,6 @@ const AIModelManager = () => {
               <div className="whitespace-pre-wrap p-4 bg-gray-50 rounded">
                 {result.data.text}
               </div>
-            </CardContent>
-          </Card>
-        );
-
-      case 'compare':
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                模型比较结果
-              </CardTitle>
-              <CardDescription>
-                总耗时: {result.data.total_duration_ms}ms | 比较模型: {result.data.models_compared}个
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {Object.entries(result.data.results).map(([modelName, modelResult]) => (
-                <div key={modelName} className="border rounded p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold">{modelName}</h4>
-                    <div className="flex items-center gap-2">
-                      {modelResult.status === 'success' ? (
-                        <Badge variant="success" className="flex items-center gap-1">
-                          <CheckCircle className="h-3 w-3" />
-                          成功
-                        </Badge>
-                      ) : (
-                        <Badge variant="destructive" className="flex items-center gap-1">
-                          <XCircle className="h-3 w-3" />
-                          失败
-                        </Badge>
-                      )}
-                      <Badge variant="outline" className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {modelResult.duration_ms}ms
-                      </Badge>
-                    </div>
-                  </div>
-                  {modelResult.status === 'success' ? (
-                    <div className="text-sm whitespace-pre-wrap bg-gray-50 p-3 rounded">
-                      {typeof modelResult.result === 'string' 
-                        ? modelResult.result 
-                        : JSON.stringify(modelResult.result, null, 2)}
-                    </div>
-                  ) : (
-                    <div className="text-sm text-red-600">
-                      错误: {modelResult.error}
-                    </div>
-                  )}
-                </div>
-              ))}
             </CardContent>
           </Card>
         );
@@ -291,7 +239,7 @@ const AIModelManager = () => {
         </div>
         <div className="flex items-center gap-2">
           <Settings className="h-5 w-5" />
-          <span className="text-sm">默认模型: {defaultModel}</span>
+          <span className="text-sm">可用提供商: {availableProviders.length}</span>
         </div>
       </div>
 
@@ -305,42 +253,41 @@ const AIModelManager = () => {
         <div className="lg:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle>可用模型</CardTitle>
-              <CardDescription>当前可用的AI模型列表</CardDescription>
+              <CardTitle>可用提供商</CardTitle>
+              <CardDescription>当前可用的AI提供商列表</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {models.map((model) => (
-                  <div key={model} className="flex items-center justify-between p-2 border rounded">
-                    <span className="text-sm font-mono">{model}</span>
-                    {model === defaultModel && (
-                      <Badge variant="outline">默认</Badge>
-                    )}
+                {availableProviders.map((provider) => (
+                  <div key={provider} className="flex items-center justify-between p-2 border rounded">
+                    <span className="text-sm font-mono">{provider}</span>
+                    <Badge variant="outline">可用</Badge>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
 
-          {Object.keys(stats).length > 0 && (
+          {stats.summary && (
             <Card className="mt-4">
               <CardHeader>
                 <CardTitle>使用统计</CardTitle>
-                <CardDescription>您的AI模型使用情况</CardDescription>
+                <CardDescription>AI模型使用情况</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {Object.entries(stats).map(([model, stat]) => (
-                    <div key={model} className="text-sm">
-                      <div className="font-medium">{model}</div>
-                      <div className="text-gray-600">
-                        调用: {stat.total_calls} | 成功: {stat.successful_calls}
-                      </div>
-                      <div className="text-gray-600">
-                        平均耗时: {stat.avg_duration_ms}ms
-                      </div>
-                    </div>
-                  ))}
+                  <div className="text-sm">
+                    <div className="font-medium">总调用次数</div>
+                    <div className="text-gray-600">{stats.summary.total_calls}</div>
+                  </div>
+                  <div className="text-sm">
+                    <div className="font-medium">成功率</div>
+                    <div className="text-gray-600">{stats.summary.success_rate}%</div>
+                  </div>
+                  <div className="text-sm">
+                    <div className="font-medium">平均响应时间</div>
+                    <div className="text-gray-600">{stats.summary.avg_response_time}ms</div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -349,11 +296,10 @@ const AIModelManager = () => {
 
         <div className="lg:col-span-3">
           <Tabs defaultValue="challenge" className="space-y-4">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="challenge">生成题目</TabsTrigger>
               <TabsTrigger value="flag">生成Flag</TabsTrigger>
               <TabsTrigger value="text">生成文本</TabsTrigger>
-              <TabsTrigger value="compare">模型比较</TabsTrigger>
               <TabsTrigger value="config">配置管理</TabsTrigger>
             </TabsList>
 
@@ -366,9 +312,9 @@ const AIModelManager = () => {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="category">题目类型</Label>
-                      <Select value={challengeForm.category} onValueChange={(value) => 
-                        setChallengeForm({...challengeForm, category: value})
+                      <Label htmlFor="challenge_type">题目类型</Label>
+                      <Select value={challengeForm.challenge_type} onValueChange={(value) => 
+                        setChallengeForm({...challengeForm, challenge_type: value})
                       }>
                         <SelectTrigger>
                           <SelectValue />
@@ -399,27 +345,27 @@ const AIModelManager = () => {
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="model">AI模型（可选）</Label>
-                    <Select value={challengeForm.model} onValueChange={(value) => 
-                      setChallengeForm({...challengeForm, model: value})
+                    <Label htmlFor="provider">AI提供商（可选）</Label>
+                    <Select value={challengeForm.provider} onValueChange={(value) => 
+                      setChallengeForm({...challengeForm, provider: value})
                     }>
                       <SelectTrigger>
-                        <SelectValue placeholder="使用默认模型" />
+                        <SelectValue placeholder="使用默认提供商" />
                       </SelectTrigger>
                       <SelectContent>
-                        {models.map((model) => (
-                          <SelectItem key={model} value={model}>{model}</SelectItem>
+                        {availableProviders.map((provider) => (
+                          <SelectItem key={provider} value={provider}>{provider}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="requirements">题目要求</Label>
+                    <Label htmlFor="prompt">题目要求</Label>
                     <Textarea
-                      id="requirements"
+                      id="prompt"
                       placeholder="请描述您想要生成的题目要求..."
-                      value={challengeForm.requirements}
-                      onChange={(e) => setChallengeForm({...challengeForm, requirements: e.target.value})}
+                      value={challengeForm.prompt}
+                      onChange={(e) => setChallengeForm({...challengeForm, prompt: e.target.value})}
                       rows={4}
                     />
                   </div>
@@ -456,16 +402,16 @@ const AIModelManager = () => {
                       </Select>
                     </div>
                     <div>
-                      <Label htmlFor="flag_model">AI模型（可选）</Label>
-                      <Select value={flagForm.model} onValueChange={(value) => 
-                        setFlagForm({...flagForm, model: value})
+                      <Label htmlFor="provider">AI提供商（可选）</Label>
+                      <Select value={flagForm.provider} onValueChange={(value) => 
+                        setFlagForm({...flagForm, provider: value})
                       }>
                         <SelectTrigger>
-                          <SelectValue placeholder="使用默认模型" />
+                          <SelectValue placeholder="使用默认提供商" />
                         </SelectTrigger>
                         <SelectContent>
-                          {models.map((model) => (
-                            <SelectItem key={model} value={model}>{model}</SelectItem>
+                          {availableProviders.map((provider) => (
+                            <SelectItem key={provider} value={provider}>{provider}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -492,20 +438,20 @@ const AIModelManager = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>AI生成文本</CardTitle>
-                  <CardDescription>使用AI模型生成任意文本内容</CardDescription>
+                  <CardDescription>使用AI模型生成自定义文本内容</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <Label htmlFor="text_model">AI模型（可选）</Label>
-                    <Select value={textForm.model} onValueChange={(value) => 
-                      setTextForm({...textForm, model: value})
+                    <Label htmlFor="provider">AI提供商（可选）</Label>
+                    <Select value={textForm.provider} onValueChange={(value) => 
+                      setTextForm({...textForm, provider: value})
                     }>
                       <SelectTrigger>
-                        <SelectValue placeholder="使用默认模型" />
+                        <SelectValue placeholder="使用默认提供商" />
                       </SelectTrigger>
                       <SelectContent>
-                        {models.map((model) => (
-                          <SelectItem key={model} value={model}>{model}</SelectItem>
+                        {availableProviders.map((provider) => (
+                          <SelectItem key={provider} value={provider}>{provider}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -552,143 +498,6 @@ const AIModelManager = () => {
               </Card>
             </TabsContent>
 
-            <TabsContent value="compare">
-              <Card>
-                <CardHeader>
-                  <CardTitle>模型比较</CardTitle>
-                  <CardDescription>比较多个AI模型的输出结果</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label htmlFor="task_type">任务类型</Label>
-                    <Select value={compareForm.task_type} onValueChange={(value) => 
-                      setCompareForm({...compareForm, task_type: value})
-                    }>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="text">文本生成</SelectItem>
-                        <SelectItem value="challenge">题目生成</SelectItem>
-                        <SelectItem value="flag">Flag生成</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  {compareForm.task_type === 'challenge' && (
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label>题目类型</Label>
-                        <Select value={compareForm.category} onValueChange={(value) => 
-                          setCompareForm({...compareForm, category: value})
-                        }>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Web">Web</SelectItem>
-                            <SelectItem value="Pwn">Pwn</SelectItem>
-                            <SelectItem value="Reverse">Reverse</SelectItem>
-                            <SelectItem value="Crypto">Crypto</SelectItem>
-                            <SelectItem value="Misc">Misc</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>难度</Label>
-                        <Select value={compareForm.difficulty} onValueChange={(value) => 
-                          setCompareForm({...compareForm, difficulty: value})
-                        }>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Easy">Easy</SelectItem>
-                            <SelectItem value="Medium">Medium</SelectItem>
-                            <SelectItem value="Hard">Hard</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {compareForm.task_type === 'flag' && (
-                    <div>
-                      <Label>题目类型</Label>
-                      <Select value={compareForm.challenge_type} onValueChange={(value) => 
-                        setCompareForm({...compareForm, challenge_type: value})
-                      }>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Web">Web</SelectItem>
-                          <SelectItem value="Pwn">Pwn</SelectItem>
-                          <SelectItem value="Reverse">Reverse</SelectItem>
-                          <SelectItem value="Crypto">Crypto</SelectItem>
-                          <SelectItem value="Misc">Misc</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                  
-                  <div>
-                    <Label>选择模型</Label>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      {models.map((model) => (
-                        <label key={model} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={compareForm.models.includes(model)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setCompareForm({
-                                  ...compareForm,
-                                  models: [...compareForm.models, model]
-                                });
-                              } else {
-                                setCompareForm({
-                                  ...compareForm,
-                                  models: compareForm.models.filter(m => m !== model)
-                                });
-                              }
-                            }}
-                          />
-                          <span className="text-sm">{model}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="compare_prompt">提示词</Label>
-                    <Textarea
-                      id="compare_prompt"
-                      placeholder="请输入提示词..."
-                      value={compareForm.prompt}
-                      onChange={(e) => setCompareForm({...compareForm, prompt: e.target.value})}
-                      rows={4}
-                    />
-                  </div>
-                  <Button onClick={handleCompareModels} disabled={loading} className="w-full">
-                    {loading ? '比较中...' : '开始比较'}
-                  </Button>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-
-          {renderResult()}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default AIModelManager;
-
-
-
             <TabsContent value="config">
               <Card>
                 <CardHeader>
@@ -698,33 +507,9 @@ export default AIModelManager;
                 <CardContent className="space-y-4">
                   <Alert>
                     <AlertDescription>
-                      请在后端服务器的环境变量中配置API密钥和基础URL。此页面仅用于查看当前已加载的模型配置状态。
+                      AI模型配置功能正在开发中，敬请期待。
                     </AlertDescription>
                   </Alert>
-                  <div className="space-y-4">
-                    {models.length > 0 ? (
-                      models.map((modelName) => {
-                        const modelConfig = stats[modelName] || {};
-                        return (
-                          <div key={modelName} className="border rounded p-4">
-                            <h4 className="font-semibold text-lg mb-2">{modelName}</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <Label>API Key</Label>
-                                <Input type="text" value={modelConfig.api_key_configured ? "已配置" : "未配置"} readOnly />
-                              </div>
-                              <div>
-                                <Label>API Base URL</Label>
-                                <Input type="text" value={modelConfig.api_base_configured ? "已配置" : "未配置"} readOnly />
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <p className="text-gray-500">没有可用的AI模型配置。</p>
-                    )}
-                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
